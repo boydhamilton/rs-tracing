@@ -6,7 +6,9 @@ use rayon::prelude::*;
 use super::colour::{write_colour, Colour};
 use super::hittable::Hittable;
 use super::ray::Ray;
-use super::vec3::{unit_vector, Vec3};
+use super::vec3::{random_unit_vector, unit_vector, Vec3};
+
+const MAX_DEPTH: i32 = 50;
 
 pub struct Camera {
     image_width: i32,
@@ -61,7 +63,7 @@ impl Camera {
                     let mut pixel_colour = Vec3::new(0.0, 0.0, 0.0);
                     for _ in 0..self.samples_per_pixel {
                         let ray = self.get_ray(i, j);
-                        pixel_colour = pixel_colour + Self::ray_colour(&ray, world).0;
+                        pixel_colour = pixel_colour + Self::ray_colour(&ray, MAX_DEPTH, world).0;
                     }
                     write_colour(&mut row_buf, Colour(pixel_colour / self.samples_per_pixel as f64));
                 }
@@ -86,9 +88,15 @@ impl Camera {
         Ray::new(self.center, pixel_sample - self.center)
     }
 
-    fn ray_colour(ray: &Ray, world: &(dyn Hittable + Sync)) -> Colour {
+    fn ray_colour(ray: &Ray, depth: i32, world: &(dyn Hittable + Sync)) -> Colour {
+        if depth <= 0 {
+            return Colour(Vec3::new(0.0, 0.0, 0.0));
+        }
+
         if let Some(rec) = world.hit(ray, 0.001, f64::INFINITY) {
-            return Colour((rec.normal + Vec3::new(1.0, 1.0, 1.0)) * 0.5);
+            let scatter_direction = rec.normal + random_unit_vector();
+            let scattered = Ray::new(rec.p, scatter_direction);
+            return Colour(Self::ray_colour(&scattered, depth - 1, world).0 * 0.5);
         }
 
         let unit_direction = unit_vector(ray.direction());

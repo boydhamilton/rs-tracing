@@ -2,6 +2,8 @@
 use std::fmt;
 use std::ops::*;
 
+use rand::Rng;
+
 #[derive(Copy, Clone)]
 pub struct Vec3 {
     pub x: f64,
@@ -20,6 +22,15 @@ impl Vec3 {
 
     pub fn length(self) -> f64 {
         f64::sqrt(self.length_squared())
+    }
+
+    pub fn random(min: f64, max: f64) -> Vec3 {
+        let mut rng = rand::thread_rng();
+        Vec3::new(
+            rng.gen_range(min..max),
+            rng.gen_range(min..max),
+            rng.gen_range(min..max),
+        )
     }
 }
 
@@ -124,3 +135,14 @@ pub fn cross(u: Vec3, v: Vec3) -> Vec3 {
 pub fn unit_vector(v: Vec3) -> Vec3 {
     v / v.length()
 }
+
+pub fn random_unit_vector() -> Vec3 {
+    loop {
+        let p = Vec3::random(-1.0, 1.0);
+        let lensq = p.length_squared();
+        if 1e-160 < lensq && lensq <= 1.0 {
+            return p / lensq.sqrt();
+        }
+    }
+}
+
