@@ -1,19 +1,14 @@
 use std::fs::File;
-use std::io::Write;
 
-use rs_tracing::{write_colour, Colour};
+use rs_tracing::{Camera, HittableList, Sphere, Vec3};
 
 fn main() {
-    let img_width = 256;
-    let img_height = 256;
+    let mut world = HittableList::new();
+    world.add(Box::new(Sphere::new(Vec3::new(0.0, 0.0, -1.0), 0.5)));
+    world.add(Box::new(Sphere::new(Vec3::new(0.0, -100.5, -1.0), 100.0)));
+
+    let camera = Camera::new(16.0 / 9.0, 1200, 1000);
 
     let mut file = File::create("output.ppm").unwrap();
-    writeln!(file, "P3\n{img_width} {img_height}\n255").unwrap();
-
-    for j in 0..img_height {
-        for i in 0..img_width {
-            let colour = Colour::new(i as f64 / img_width as f64, j as f64 / img_height as f64, 0.2);
-            write_colour(&mut file, colour);
-        }
-    }
+    camera.render(&world, &mut file);
 }
